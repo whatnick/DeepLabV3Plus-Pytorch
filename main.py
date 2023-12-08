@@ -168,8 +168,8 @@ def get_dataset(opts):
             et.ExtNormalize(mean=[0.485, 0.456, 0.406],
                             std=[0.229, 0.224, 0.225]),
         ])
-        train_dst = Sketches(root=opts.data_root)
-        val_dst = Sketches(root=opts.data_root)
+        train_dst = Sketches(root=opts.data_root, transform=train_transform)
+        val_dst = Sketches(root=opts.data_root, transform=val_transform)
 
     return train_dst, val_dst
 
