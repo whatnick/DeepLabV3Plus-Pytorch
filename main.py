@@ -7,7 +7,7 @@ import argparse
 import numpy as np
 
 from torch.utils import data
-from datasets import VOCSegmentation, Cityscapes
+from datasets import VOCSegmentation, Cityscapes, Sketches
 from utils import ext_transforms as et
 from metrics import StreamSegMetrics
 
@@ -27,7 +27,7 @@ def get_argparser():
     parser.add_argument("--data_root", type=str, default='./datasets/data',
                         help="path to Dataset")
     parser.add_argument("--dataset", type=str, default='voc',
-                        choices=['voc', 'cityscapes'], help='Name of dataset')
+                        choices=['voc', 'cityscapes', 'sketches'], help='Name of dataset')
     parser.add_argument("--num_classes", type=int, default=None,
                         help="num classes (default: None)")
 
@@ -150,6 +150,27 @@ def get_dataset(opts):
                                split='train', transform=train_transform)
         val_dst = Cityscapes(root=opts.data_root,
                              split='val', transform=val_transform)
+    
+    if opts.dataset == 'sketches':
+        train_transform = et.ExtCompose([
+            # et.ExtResize( 512 ),
+            et.ExtRandomCrop(size=(opts.crop_size, opts.crop_size)),
+            et.ExtColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
+            et.ExtRandomHorizontalFlip(),
+            et.ExtToTensor(),
+            et.ExtNormalize(mean=[0.485, 0.456, 0.406],
+                            std=[0.229, 0.224, 0.225]),
+        ])
+
+        val_transform = et.ExtCompose([
+            # et.ExtResize( 512 ),
+            et.ExtToTensor(),
+            et.ExtNormalize(mean=[0.485, 0.456, 0.406],
+                            std=[0.229, 0.224, 0.225]),
+        ])
+        train_dst = Sketches(root=opts.data_root)
+        val_dst = Sketches(root=opts.data_root)
+
     return train_dst, val_dst
 
 
@@ -214,6 +235,8 @@ def main():
         opts.num_classes = 21
     elif opts.dataset.lower() == 'cityscapes':
         opts.num_classes = 19
+    elif opts.dataset.lower() == 'sketches':
+        opts.num_classes = 2
 
     # Setup visualization
     vis = Visualizer(port=opts.vis_port,
